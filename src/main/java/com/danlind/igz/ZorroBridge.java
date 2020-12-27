@@ -64,8 +64,25 @@ public class ZorroBridge {
                        final String Pwd,
                        final String Type,
                        final String Accounts[]) {
-        logger.debug("Broker Login called with User {}, Type {}", User, Type);
+        logger.info("Broker Login called with User {}, Type {}, pwd {}", User, Type, Pwd);
         final int loginResult = loginHandler.connect(User,
+                                                         Pwd,
+                                                         Type);
+        if (loginResult == ZorroReturnValues.LOGIN_OK.getValue()) {
+            logger.info("Login successful");
+            initComponents();
+            isFirstLogin = false;
+        }
+
+        return loginResult;
+    }
+
+    public int doLoginV2(final String User,
+                       final String Pwd,
+                       final String Type,
+                       final String Accounts[]) {
+        logger.info("Broker Login called with User {}, Type {}, pwd {}", User, Type, Pwd);
+        final int loginResult = loginHandler.connectV2(User,
                                                          Pwd,
                                                          Type);
         if (loginResult == ZorroReturnValues.LOGIN_OK.getValue()) {

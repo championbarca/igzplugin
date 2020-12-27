@@ -34,7 +34,7 @@ DllCallHandler::BrokerLogin(const char *User,
 		env->FindClass("java/lang/String"),
 		env->NewStringUTF(""));
 	jint res = (jlong)env->CallObjectMethod(JData::JIgZorroBridgeObject,
-		JData::doLogin.methodID,
+		JData::doLoginV2.methodID,
 		jUser,
 		jPwd,
 		jType,

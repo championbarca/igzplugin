@@ -1,5 +1,6 @@
 package com.danlind.igz.ig.api.client.rest.dto.prices.getPricesByDateRangeV1;
 
+import java.math.BigDecimal;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /*

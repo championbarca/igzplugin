@@ -11,6 +11,7 @@ namespace JData
 
 	JMethodDesc constructor = { nullptr, "<init>",           "()V" };
 	JMethodDesc doLogin = { nullptr, "doLogin",          "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)I" };
+	JMethodDesc doLoginV2 = { nullptr, "doLoginV2",          "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)I" };
 	JMethodDesc doLogout = { nullptr, "doLogout",         "()I" };
 	JMethodDesc doBrokerTime = { nullptr, "doBrokerTime",     "([D)I" };
 	JMethodDesc doSubscribeAsset = { nullptr, "doSubscribeAsset", "(Ljava/lang/String;)I" };
@@ -36,6 +37,7 @@ namespace JData
 
 	const std::vector<JMethodDesc*> igZorroBridgeMethods = { &constructor,
 		&doLogin,
+		&doLoginV2,
 		&doLogout,
 		&doBrokerTime,
 		&doSubscribeAsset,

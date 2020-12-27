@@ -1,5 +1,6 @@
 package com.danlind.igz.ig.api.client.rest.dto.workingorders.otc.createOTCWorkingOrderV1;
 
+import java.math.BigDecimal;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /*

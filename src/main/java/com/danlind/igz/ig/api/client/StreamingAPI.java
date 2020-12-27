@@ -139,7 +139,9 @@ public class StreamingAPI {
 				"{accountId}", accountId);
 
 		ExtendedTableInfo extendedTableInfo = new ExtendedTableInfo(
-				new String[]{subscriptionKey}, "MERGE", new String[]{"FUNDS", "PNL", "MARGIN"}, true);
+				new String[]{subscriptionKey}, "MERGE", new String[]{"PNL",
+						"DEPOSIT", "USED_MARGIN", "AMOUNT_DUE",
+						"AVAILABLE_CASH"}, true);
 
 		final SubscribedTableKey subscribedTableKey = lsClient.subscribeTable(
 				extendedTableInfo, adapter, false);

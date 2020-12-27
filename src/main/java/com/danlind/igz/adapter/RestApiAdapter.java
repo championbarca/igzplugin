@@ -10,6 +10,7 @@ import com.danlind.igz.handler.LoginHandler;
 import com.danlind.igz.ig.api.client.RestAPI;
 import com.danlind.igz.ig.api.client.rest.AuthenticationResponseAndConversationContext;
 import com.danlind.igz.ig.api.client.rest.ConversationContextV3;
+import com.danlind.igz.ig.api.client.rest.ConversationContextV2;
 import com.danlind.igz.ig.api.client.rest.dto.getDealConfirmationV1.DealStatus;
 import com.danlind.igz.ig.api.client.rest.dto.getDealConfirmationV1.GetDealConfirmationV1Response;
 import com.danlind.igz.ig.api.client.rest.dto.positions.otc.closeOTCPositionV1.CloseOTCPositionV1Request;
@@ -18,6 +19,7 @@ import com.danlind.igz.ig.api.client.rest.dto.positions.otc.updateOTCPositionV2.
 import com.danlind.igz.ig.api.client.rest.dto.prices.getPricesV3.GetPricesV3Response;
 import com.danlind.igz.ig.api.client.rest.dto.session.createSessionV3.AccessTokenResponse;
 import com.danlind.igz.ig.api.client.rest.dto.session.createSessionV3.CreateSessionV3Request;
+import com.danlind.igz.ig.api.client.rest.dto.session.createSessionV2.CreateSessionV2Request;
 import com.danlind.igz.ig.api.client.rest.dto.session.refreshSessionV1.RefreshSessionV1Request;
 import com.danlind.igz.misc.ExceptionHelper;
 import com.danlind.igz.misc.RetryWithDelay;
@@ -156,8 +158,20 @@ public class RestApiAdapter {
             .doOnError(err -> LOG.error("Exception when logging in, {}", ExceptionHelper.getErrorMessage(err), err));
     }
 
+    public Single<AuthenticationResponseAndConversationContext> createSessionV2(CreateSessionV2Request authRequest, String apiKey, boolean encrypted) {
+        return Single.fromCallable(() -> restApi.createSession(authRequest, apiKey, encrypted))
+            .retryWhen(new RetryWithDelay(pluginProperties.getRefreshTokenMaxRetry(), pluginProperties.getRefreshTokenRetryInterval()))
+            .doOnError(err -> LOG.error("Exception when logging in, {}", ExceptionHelper.getErrorMessage(err), err));
+    }
+
     public Flowable<AccessTokenResponse> refreshSessionV1(ConversationContextV3 contextV3, RefreshSessionV1Request build) {
         return Flowable.fromCallable(() -> restApi.refreshSessionV1(contextV3, build))
+            .retryWhen(new RetryWithDelay(pluginProperties.getRefreshTokenMaxRetry(), pluginProperties.getRefreshTokenRetryInterval()))
+            .doOnError(err -> LOG.error("Exception when refreshing session token,  {}", ExceptionHelper.getErrorMessage(err), err));
+    }
+
+    public Flowable<AccessTokenResponse> refreshSessionV1(ConversationContextV2 contextV2, RefreshSessionV1Request build) {
+        return Flowable.fromCallable(() -> restApi.refreshSessionV1(contextV2, build))
             .retryWhen(new RetryWithDelay(pluginProperties.getRefreshTokenMaxRetry(), pluginProperties.getRefreshTokenRetryInterval()))
             .doOnError(err -> LOG.error("Exception when refreshing session token,  {}", ExceptionHelper.getErrorMessage(err), err));
     }

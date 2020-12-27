@@ -1,5 +1,6 @@
 package com.danlind.igz.ig.api.client.rest.dto.markets.getMarketDetailsListV2;
 
+import java.math.BigDecimal;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /*

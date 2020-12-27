@@ -20,6 +20,10 @@ public class LoginHandler {
         return brokerLogin.connect(identifier, password, accountType);
     }
 
+    public int connectV2(String identifier, String password, String accountType)  {
+        return brokerLogin.connectV2(identifier, password, accountType);
+    }
+
     public int disconnect() {
         return brokerLogin.disconnect();
     }

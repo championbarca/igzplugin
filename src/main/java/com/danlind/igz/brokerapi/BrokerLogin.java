@@ -9,7 +9,9 @@ import com.danlind.igz.domain.types.AccountType;
 import com.danlind.igz.ig.api.client.rest.AuthenticationResponseAndConversationContext;
 import com.danlind.igz.ig.api.client.rest.ConversationContext;
 import com.danlind.igz.ig.api.client.rest.ConversationContextV3;
+import com.danlind.igz.ig.api.client.rest.ConversationContextV2;
 import com.danlind.igz.ig.api.client.rest.dto.session.createSessionV3.CreateSessionV3Request;
+import com.danlind.igz.ig.api.client.rest.dto.session.createSessionV2.CreateSessionV2Request;
 import com.danlind.igz.ig.api.client.rest.dto.session.refreshSessionV1.RefreshSessionV1Request;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
@@ -41,11 +43,32 @@ public class BrokerLogin {
         this.pluginProperties = pluginProperties;
     }
 
+    public int connectV2(String identifier, String password, String accountType) {
+        this.zorroAccountType = AccountType.valueOf(accountType);
+        String apiKey = this.zorroAccountType == AccountType.Real ? pluginProperties.getRealApiKey() : pluginProperties.getDemoApiKey();
+        logger.info("Connecting to IG {}-account as {}, pwd as {}, apiKey as {}", this.zorroAccountType.name(), identifier, password, apiKey);
+        
+        boolean encrypt = Boolean.TRUE;
+        CreateSessionV2Request authRequest = new CreateSessionV2Request();
+        authRequest.setIdentifier(identifier);
+        authRequest.setPassword(password);
+        authRequest.setEncryptedPassword(encrypt);
+        Disposable progress = indicateProgress();
+
+        return restApiAdapter.createSessionV2(authRequest, apiKey, encrypt)
+            .doOnSuccess(this::setAuthenticationContext)
+            .flatMap(authenticationContext -> streamingApiAdapter.connect(authenticationContext))
+            .map(__ -> ZorroReturnValues.LOGIN_OK.getValue())
+            .doOnSuccess(__ -> startRefreshAccessTokenSchedulerV2())
+            .onErrorReturn(err -> ZorroReturnValues.LOGIN_FAIL.getValue())
+            .doFinally(() -> progress.dispose())
+            .blockingGet();
+    }
+
     public int connect(String identifier, String password, String accountType) {
         this.zorroAccountType = AccountType.valueOf(accountType);
-        logger.info("Connecting to IG {}-account as {}", this.zorroAccountType.name(), identifier);
-
         String apiKey = this.zorroAccountType == AccountType.Real ? pluginProperties.getRealApiKey() : pluginProperties.getDemoApiKey();
+        logger.info("Connecting to IG {}-account as {}, pwd as {}, apiKey as {}", this.zorroAccountType.name(), identifier, password, apiKey);
         CreateSessionV3Request authRequest = new CreateSessionV3Request();
         authRequest.setIdentifier(identifier);
         authRequest.setPassword(password);
@@ -70,6 +93,16 @@ public class BrokerLogin {
         return ZorroReturnValues.LOGOUT_OK.getValue();
     }
 
+    private void refreshAccessTokenV2() {
+        logger.debug("Refreshing access token");
+        String apiKey = this.zorroAccountType == AccountType.Real ? pluginProperties.getRealApiKey() : pluginProperties.getDemoApiKey();
+        ConversationContextV2 contextV2 = (ConversationContextV2) authenticationContext.getConversationContext();
+        restApiAdapter.refreshSessionV1((ConversationContextV2) authenticationContext.getConversationContext(),
+            RefreshSessionV1Request.builder().refresh_token(contextV2.getClientSecurityToken()).build())
+            .subscribe(accessToken -> authenticationContext.setConversationContext(
+                new ConversationContextV2(contextV2.getClientSecurityToken(), contextV2.getAccountSecurityToken(), apiKey)), error -> disconnect());
+    }
+
     private void refreshAccessToken() {
         logger.debug("Refreshing access token");
         ConversationContextV3 contextV3 = (ConversationContextV3) authenticationContext.getConversationContext();
@@ -88,6 +121,17 @@ public class BrokerLogin {
             .doOnError(error -> logger.error("Got error from interval", error))
             .retry(3)
             .subscribe(x -> refreshAccessToken());
+    }
+
+    private void startRefreshAccessTokenSchedulerV2() {
+        if (Objects.nonNull(tokenSubscription)) {
+            logger.debug("Disposing of existing access token subscription");
+            tokenSubscription.dispose();
+        }
+        tokenSubscription = Flowable.interval(pluginProperties.getRefreshTokenInterval(), TimeUnit.MILLISECONDS, Schedulers.io())
+            .doOnError(error -> logger.error("Got error from interval", error))
+            .retry(3)
+            .subscribe(x -> refreshAccessTokenV2());
     }
 
     private Disposable indicateProgress() {

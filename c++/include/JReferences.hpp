@@ -22,6 +22,7 @@ extern jclass ExceptionClass;
 
 extern JMethodDesc constructor;
 extern JMethodDesc doLogin;
+extern JMethodDesc doLoginV2;
 extern JMethodDesc doLogout;
 extern JMethodDesc doBrokerTime;
 extern JMethodDesc doSubscribeAsset;
